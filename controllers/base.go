@@ -13,7 +13,7 @@ type Controller interface {
 }
 
 type BaseController struct {
-	name       string
+	Name       string
 	currentOps sync.WaitGroup
 	loggerImpl logger.Logger
 	services   []common.Closer
@@ -21,14 +21,14 @@ type BaseController struct {
 
 func NewBaseController(name string, loggerImpl logger.Logger) BaseController {
 	return BaseController{
-		name:       name,
+		Name:       name,
 		currentOps: sync.WaitGroup{},
 		loggerImpl: loggerImpl,
 	}
 }
 
 func (c *BaseController) Close() {
-	c.loggerImpl.Debug(fmt.Sprintf("%s Shutdown\n", c.name))
+	c.loggerImpl.Debug(fmt.Sprintf("%s Shutdown\n", c.Name))
 	c.currentOps.Wait()
 	for _, closeableService := range c.services {
 		closeableService.Close()
