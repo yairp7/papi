@@ -1,0 +1,6 @@
+tmp/
+docs/
+.build-dir/
+.vscode
+.env
+*.json
