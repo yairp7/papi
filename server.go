@@ -49,13 +49,15 @@ func (s *Server[ConfDataType]) Start(
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	s.config = config
+
 	s.router, err = newRouter(s.loggerImpl)
 	if err != nil {
 		panic(err)
 	}
 
 	s.setupDefaultRoutes()
-	setup(config)
+	setup(s.config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", "", config.Port),
