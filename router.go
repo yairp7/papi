@@ -50,3 +50,7 @@ func (r *Router) shutdownRouter() {
 		closeable.Close()
 	}
 }
+
+func (r *Router) Engine() *gin.Engine {
+	return r.engine
+}

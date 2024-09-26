@@ -125,3 +125,7 @@ func (s *Server[ConfDataType]) Shutdown(srv *http.Server) {
 		s.loggerImpl.Info("Server shutdown complete")
 	}
 }
+
+func (s *Server[ConfDataType]) GetRouter() *Router {
+	return s.router
+}
