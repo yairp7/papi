@@ -81,28 +81,30 @@ func (s *Server[ConfDataType]) Start(
 
 func (s *Server[ConfDataType]) RegisterController(
 	controller controllers.Controller,
-	endpoints map[string]EndpointInfo,
+	endpoints map[string][]EndpointInfo,
 ) {
 	if controller == nil || endpoints == nil {
 		return
 	}
 
-	for route, info := range endpoints {
-		if info.Middlewares == nil || len(info.Middlewares) == 0 {
-			s.router.engine.Handle(info.Method, route, info.Handler)
-			continue
+	for route, infos := range endpoints {
+		for _, info := range infos {
+			if info.Middlewares == nil || len(info.Middlewares) == 0 {
+				s.router.engine.Handle(info.Method, route, info.Handler)
+				continue
+			}
+			handlers := []gin.HandlerFunc{info.Handler}
+			handlers = append(handlers, info.Middlewares...)
+			s.router.engine.Handle(info.Method, route, handlers...)
 		}
-		handlers := []gin.HandlerFunc{info.Handler}
-		handlers = append(handlers, info.Middlewares...)
-		s.router.engine.Handle(info.Method, route, handlers...)
 	}
 	s.router.registerController(controller)
 }
 
 func (s *Server[ConfDataType]) setupDefaultRoutes() {
 	healthController := controllers.NewHealthController(s.loggerImpl)
-	s.RegisterController(healthController, map[string]EndpointInfo{
-		s.config.HeathCheckRoute: {Method: http.MethodGet, Handler: healthController.Status},
+	s.RegisterController(healthController, map[string][]EndpointInfo{
+		s.config.HeathCheckRoute: {{Method: http.MethodGet, Handler: healthController.Status}},
 	})
 }
 

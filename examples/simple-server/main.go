@@ -25,8 +25,11 @@ func main() {
 		namesController := controllers.NewNamesController(loggerImpl, conf.Data.Names)
 		server.RegisterController(
 			namesController,
-			map[string]papi.EndpointInfo{
-				"/name": {Method: http.MethodGet, Handler: namesController.Name},
+			map[string][]papi.EndpointInfo{
+				"/name": {
+					{Method: http.MethodGet, Handler: namesController.Name},
+					{Method: http.MethodPost, Handler: namesController.AddName},
+				},
 			},
 		)
 	})

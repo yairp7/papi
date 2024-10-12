@@ -9,6 +9,10 @@ import (
 	"github.com/yairp7/papi/controllers"
 )
 
+type NameObj struct {
+	Name string `json:"name"`
+}
+
 type NamesController struct {
 	controllers.BaseController
 	names []string
@@ -27,4 +31,16 @@ func NewNamesController(
 func (c *NamesController) Name(ctx *gin.Context) {
 	randName := c.names[rand.Intn(len(c.names))]
 	ctx.String(http.StatusOK, randName)
+}
+
+func (c *NamesController) AddName(ctx *gin.Context) {
+	var nameObj NameObj
+	err := ctx.Bind(&nameObj)
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	c.names = append(c.names, nameObj.Name)
+	ctx.Status(http.StatusOK)
 }
