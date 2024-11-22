@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/yairp7/go-common-lib/logger"
 	"github.com/yairp7/papi/config"
 	"github.com/yairp7/papi/controllers"
@@ -22,27 +20,19 @@ type EndpointInfo struct {
 	Middlewares []gin.HandlerFunc
 }
 
-type Server[ConfDataType any] struct {
-	config     config.Config[ConfDataType]
+type Server struct {
+	config     config.ServerConfig
 	router     *Router
 	loggerImpl logger.Logger
 }
 
-func NewServer[ConfDataType any](loggerImpl logger.Logger) *Server[ConfDataType] {
-	return &Server[ConfDataType]{
+func NewServer(loggerImpl logger.Logger) *Server {
+	return &Server{
 		loggerImpl: loggerImpl,
 	}
 }
 
-func (s *Server[ConfDataType]) Start(
-	setup func(config config.Config[ConfDataType]),
-) {
-	godotenv.Load()
-	config, err := config.ReadBase64Config[ConfDataType](os.Getenv("CONFIG"))
-	if err != nil {
-		panic(err)
-	}
-
+func (s *Server) Start(config config.ServerConfig) {
 	if config.Env == "staging" {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -51,13 +41,15 @@ func (s *Server[ConfDataType]) Start(
 
 	s.config = config
 
+	var err error
+
 	s.router, err = newRouter(s.loggerImpl)
 	if err != nil {
 		panic(err)
 	}
 
 	s.setupDefaultRoutes()
-	setup(s.config)
+	// setup(s.config)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", "", config.Port),
@@ -79,7 +71,7 @@ func (s *Server[ConfDataType]) Start(
 	s.Shutdown(srv)
 }
 
-func (s *Server[ConfDataType]) RegisterController(
+func (s *Server) RegisterController(
 	controller controllers.Controller,
 	endpoints map[string][]EndpointInfo,
 ) {
@@ -101,15 +93,15 @@ func (s *Server[ConfDataType]) RegisterController(
 	s.router.registerController(controller)
 }
 
-func (s *Server[ConfDataType]) setupDefaultRoutes() {
+func (s *Server) setupDefaultRoutes() {
 	healthController := controllers.NewHealthController(s.loggerImpl)
 	s.RegisterController(healthController, map[string][]EndpointInfo{
 		s.config.HeathCheckRoute: {{Method: http.MethodGet, Handler: healthController.Status}},
 	})
 }
 
-func (s *Server[ConfDataType]) Shutdown(srv *http.Server) {
-	s.loggerImpl.Info("Shutting server down...")
+func (s *Server) Shutdown(srv *http.Server) {
+	s.loggerImpl.Info("ֿ\rShutting server down...")
 
 	s.router.shutdownRouter()
 
@@ -128,6 +120,6 @@ func (s *Server[ConfDataType]) Shutdown(srv *http.Server) {
 	}
 }
 
-func (s *Server[ConfDataType]) GetRouter() *Router {
+func (s *Server) GetRouter() *Router {
 	return s.router
 }

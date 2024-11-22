@@ -2,7 +2,9 @@ package main
 
 import (
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/yairp7/go-common-lib/logger"
 	"github.com/yairp7/papi"
 	"github.com/yairp7/papi/config"
@@ -10,6 +12,7 @@ import (
 )
 
 type ConfigData struct {
+	config.ServerConfig
 	Names []string `json:"names"`
 }
 
@@ -20,17 +23,22 @@ var loggerImpl logger.Logger = logger.NewMixedLogger(
 )
 
 func main() {
-	server := papi.NewServer[ConfigData](loggerImpl)
-	server.Start(func(conf config.Config[ConfigData]) {
-		namesController := controllers.NewNamesController(loggerImpl, conf.Data.Names)
-		server.RegisterController(
-			namesController,
-			map[string][]papi.EndpointInfo{
-				"/name": {
-					{Method: http.MethodGet, Handler: namesController.Name},
-					{Method: http.MethodPost, Handler: namesController.AddName},
-				},
+	godotenv.Load()
+	config, err := config.ReadBase64Config[ConfigData](os.Getenv("CONFIG"))
+	if err != nil {
+		panic(err)
+	}
+
+	server := papi.NewServer(loggerImpl)
+	server.Start(config.ServerConfig)
+	namesController := controllers.NewNamesController(loggerImpl, config.Names)
+	server.RegisterController(
+		namesController,
+		map[string][]papi.EndpointInfo{
+			"/name": {
+				{Method: http.MethodGet, Handler: namesController.Name},
+				{Method: http.MethodPost, Handler: namesController.AddName},
 			},
-		)
-	})
+		},
+	)
 }
